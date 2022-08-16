@@ -16,6 +16,8 @@
 package io.netty.example.echo;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -24,9 +26,21 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.base64.Base64;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty.util.CharsetUtil;
+import sun.misc.IOUtils;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static io.netty.example.echo.LoadCertificateFile.loadCertificateFile;
 
 /**
  * Sends one message when a connection is open and echoes back any received
@@ -36,17 +50,21 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
  */
 public final class EchoClient {
 
-    static final boolean SSL = System.getProperty("ssl") != null;
+    static final boolean SSL = true; //System.getProperty("ssl") != null;
     static final String HOST = System.getProperty("host", "127.0.0.1");
     static final int PORT = Integer.parseInt(System.getProperty("port", "8007"));
     static final int SIZE = Integer.parseInt(System.getProperty("size", "256"));
 
     public static void main(String[] args) throws Exception {
+        // load rsa certificate and private key file
+        String crt = "example.crt";
+        InputStream is = loadCertificateFile(crt);
+
         // Configure SSL.git
         final SslContext sslCtx;
         if (SSL) {
             sslCtx = SslContextBuilder.forClient()
-                .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+                    .trustManager(is).build();
         } else {
             sslCtx = null;
         }
@@ -56,19 +74,19 @@ public final class EchoClient {
         try {
             Bootstrap b = new Bootstrap();
             b.group(group)
-             .channel(NioSocketChannel.class)
-             .option(ChannelOption.TCP_NODELAY, true)
-             .handler(new ChannelInitializer<SocketChannel>() {
-                 @Override
-                 public void initChannel(SocketChannel ch) throws Exception {
-                     ChannelPipeline p = ch.pipeline();
-                     if (sslCtx != null) {
-                         p.addLast(sslCtx.newHandler(ch.alloc(), HOST, PORT));
-                     }
-                     //p.addLast(new LoggingHandler(LogLevel.INFO));
-                     p.addLast(new EchoClientHandler());
-                 }
-             });
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        public void initChannel(SocketChannel ch) throws Exception {
+                            ChannelPipeline p = ch.pipeline();
+                            if (sslCtx != null) {
+                                p.addLast(sslCtx.newHandler(ch.alloc(), HOST, PORT));
+                            }
+                            //p.addLast(new LoggingHandler(LogLevel.INFO));
+                            p.addLast(new EchoClientHandler());
+                        }
+                    });
 
             // Start the client.
             ChannelFuture f = b.connect(HOST, PORT).sync();
