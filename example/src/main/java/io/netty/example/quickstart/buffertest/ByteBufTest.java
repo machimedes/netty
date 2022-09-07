@@ -1,4 +1,4 @@
-package io.netty.example.quickstart;
+package io.netty.example.quickstart.buffertest;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;

@@ -1,4 +1,4 @@
-package io.netty.example.quickstart;
+package io.netty.example.quickstart.kafka;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;

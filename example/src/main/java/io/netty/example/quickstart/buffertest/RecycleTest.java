@@ -1,4 +1,4 @@
-package io.netty.example.quickstart;
+package io.netty.example.quickstart.buffertest;
 
 import io.netty.util.Recycler;
 
