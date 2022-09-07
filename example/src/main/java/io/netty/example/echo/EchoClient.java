@@ -38,7 +38,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static io.netty.example.echo.LoadCertificateFile.loadCertificateFile;
 

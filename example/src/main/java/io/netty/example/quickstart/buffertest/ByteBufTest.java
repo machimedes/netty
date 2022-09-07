@@ -5,7 +5,6 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.util.NettyRuntime;
-import lombok.val;
 
 import java.io.BufferedReader;
 import java.nio.ByteBuffer;
