@@ -32,11 +32,20 @@ public class Client {
             ChannelFuture f = b.connect(host, port).sync();
             System.out.println("开始发消息");
             ByteBuf buffer1 = Unpooled.buffer(4);
-            buffer1.writeLong((long) 65 + 65 << 8 + 65 << 16 + 65 << 24);
-            f.channel().writeAndFlush(buffer1);
+            buffer1.writeByte(65);
+            buffer1.writeByte(65);
+            buffer1.writeByte(65);
+            buffer1.writeByte(65);
+
+            ByteBuf buffer2 = Unpooled.buffer(4);
+            buffer2.writeInt(65 + (65 << 8) + (65 << 16) + (65 << 24));
+
+            f.channel().writeAndFlush(buffer1).sync();
+            f.channel().writeAndFlush(buffer2).sync();
+
             System.out.println("发送完毕");
 
-            f.channel().closeFuture().sync();
+            f.channel().close();
         } finally {
             workerGroup.shutdownGracefully();
         }
