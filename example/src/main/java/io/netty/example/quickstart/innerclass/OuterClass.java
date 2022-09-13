@@ -1,14 +1,15 @@
 package io.netty.example.quickstart.innerclass;
 
 public class OuterClass {
-    int outer =1;
+    int outer = 1;
+    InnerClass innerClass = new InnerClass();
 
-    public InnerClass createInnerClass(){
+    public InnerClass createInnerClass() {
         return new InnerClass();
     }
 
-    public class InnerClass{
-        int inner =0;
+    public class InnerClass {
+        int inner = 0;
         {
             System.out.println(outer);
             System.out.println(OuterClass.this.outer);
