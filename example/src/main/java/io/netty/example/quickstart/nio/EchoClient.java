@@ -47,4 +47,8 @@ public class EchoClient {
         return response;
 
     }
+
+    public static void main(String[] args) {
+        start().sendMessage("hello world");
+    }
 }
