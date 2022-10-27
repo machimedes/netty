@@ -470,8 +470,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            // register时会绑定当前channel到某一个eventLoop
             AbstractChannel.this.eventLoop = eventLoop;
 
+            // register bind connect任务由主线程提交，返回false
             if (eventLoop.inEventLoop()) {
                 register0(promise);
             } else {
@@ -501,14 +503,17 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                // channel注册到当前channel绑定的EventLoop的Selector上，注意这里的注册没有注册任何具体的接收、连接、读、写事件
                 doRegister();
                 neverRegistered = false;
                 registered = true;
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
+                // 执行 ChannelInitializer 的 initChannel 方法
                 pipeline.invokeHandlerAddedIfNeeded();
 
+                // register成功 但是还没有执行bind操作
                 safeSetSuccess(promise);
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
@@ -561,8 +566,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 closeIfClosed();
                 return;
             }
-
+            // channel active的标准是可以绑定端口或可以连接到服务端
+            // 此时触发channel active事件，可见channel active表示连接最终创建
             if (!wasActive && isActive()) {
+                // 把任务提交给当前线程尾部处理，保证事件的顺序性，同时避免在前一个pipeline事件处理中触发新的pipeline事件处理，导致同时有两个pipeline并存
                 invokeLater(new Runnable() {
                     @Override
                     public void run() {

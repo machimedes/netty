@@ -55,6 +55,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             new ClosedChannelException(), AbstractNioChannel.class, "doClose()");
 
     private final SelectableChannel ch;
+    // ServerSocketChannel在这里设置了SelectionKey.OP_ACCEPT事件的关注
     protected final int readInterestOp;
     volatile SelectionKey selectionKey;
     boolean readPending;
@@ -417,6 +418,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
         final int interestOps = selectionKey.interestOps();
         if ((interestOps & readInterestOp) == 0) {
+            // 使当前channel的selectionKey关注read事件
             selectionKey.interestOps(interestOps | readInterestOp);
         }
     }

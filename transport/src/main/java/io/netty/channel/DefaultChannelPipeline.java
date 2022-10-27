@@ -120,14 +120,18 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return new DefaultChannelHandlerContext(this, childExecutor(group), name, handler);
     }
 
+    // SINGLE_EVENTEXECUTOR_PER_GROUP表示对于某个channel的事件，仅从执行组里选择一个执行器处理；默认为true
+    // 如果为false，pipeline里handler以轮询的方式绑定不同的执行器，上游handler将事件传递给下游handler时，会使用不同的线程处理事件
     private EventExecutor childExecutor(EventExecutorGroup group) {
         if (group == null) {
             return null;
         }
         Boolean pinEventExecutor = channel.config().getOption(ChannelOption.SINGLE_EVENTEXECUTOR_PER_GROUP);
+        // 如果SINGLE_EVENTEXECUTOR_PER_GROUP == false，handler以轮询的方式绑定不同的执行器
         if (pinEventExecutor != null && !pinEventExecutor) {
             return group.next();
         }
+        // 每一个pipeline都会绑定到某一个EventExecutorGroup特定的EventExecutor上
         Map<EventExecutorGroup, EventExecutor> childExecutors = this.childExecutors;
         if (childExecutors == null) {
             // Use size of 4 as most people only use one extra EventExecutor.
@@ -205,21 +209,31 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
+            // 对于非共享handler实例，只可以到一个pipeline；首次添加之后，handler标记为已经添加；如果重复添加，则报错
             checkMultiplicity(handler);
 
+            // filterName函数为每个handler创建名称并检查是否有重名的handler
+            // 每一个context为handler确定了属于哪个pipeline，名称，执行handler的childExecutor，
             newCtx = newContext(group, filterName(name, handler), handler);
 
+            // 双向链表插入newCtx
             addLast0(newCtx);
 
             // If the registered is false it means that the channel was not registered on an eventloop yet.
             // In this case we add the context to the pipeline and add a task that will call
             // ChannelHandler.handlerAdded(...) once the channel is registered.
+            // 添加handler时channel可能还没有注册，例如通过bootstrap添加的ChannelInitializer，
+            // 这一类handler不是直接用于处理事件，而是当channel注册后，调用这类handler实现channel初始化
+            // 这时候把这些handler以链表的形式追加到 pendingHandlerCallbackHead 后，然后将自己从pipeline里删除
+            // callHandlerCallbackLater 的含义就是等到注册之后才再调用 HandlerAdded 或 HandlerRemoved 方法
+            // AbstractChannel pipeline.invokeHandlerAddedIfNeeded() 是延后调用的位置
             if (!registered) {
                 newCtx.setAddPending();
                 callHandlerCallbackLater(newCtx, true);
                 return this;
             }
 
+            // handler添加之后触发callHandlerAdded0()
             EventExecutor executor = newCtx.executor();
             if (!executor.inEventLoop()) {
                 newCtx.setAddPending();
@@ -412,6 +426,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return this;
     }
 
+    // 生成handler名字，命名形式为 (handler类型的simple class name) + (#编号),如果同一个handler重复添加，编号加1
     private String generateName(ChannelHandler handler) {
         Map<Class<?>, String> cache = nameCaches.get();
         Class<?> handlerType = handler.getClass();
@@ -1420,7 +1435,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             ctx.fireChannelActive();
-
+            // 这里触发channel的read事件，最终触发 headContex.read() -> unsafe.beginRead()
             readIfIsAutoRead();
         }
 

@@ -215,6 +215,7 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
                 notifyHandlerException(t);
             }
         } else {
+            // fire表示查找下一个可用的handler并触发查找到的handler
             fireChannelActive();
         }
     }
