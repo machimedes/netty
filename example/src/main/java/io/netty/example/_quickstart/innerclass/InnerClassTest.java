@@ -1,4 +1,4 @@
-package io.netty.example.quickstart.innerclass;
+package io.netty.example._quickstart.innerclass;
 
 public class InnerClassTest {
     public static void main(String[] args) {

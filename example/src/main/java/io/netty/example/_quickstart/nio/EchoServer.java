@@ -1,4 +1,4 @@
-package io.netty.example.quickstart.nio;
+package io.netty.example._quickstart.nio;
 
 import java.io.File;
 import java.io.IOException;

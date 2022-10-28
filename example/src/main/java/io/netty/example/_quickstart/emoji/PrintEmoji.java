@@ -1,4 +1,4 @@
-package io.netty.example.quickstart.emoji;
+package io.netty.example._quickstart.emoji;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;

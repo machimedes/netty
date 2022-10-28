@@ -1,9 +1,21 @@
-package io.netty.example.quickstart.threadtest;
+package io.netty.example._quickstart.threadtest;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ThreadNotify {
 
     public static void main(String[] args) throws Exception {
 
+
+        final AtomicBoolean wakenUp = new AtomicBoolean();
+        wakenUp.set(false);
+        System.out.println(wakenUp);
+        System.out.println(wakenUp.compareAndSet(false, true));
+        System.out.println(wakenUp);
+        System.out.println(wakenUp.compareAndSet(false, true));
+        System.out.println(wakenUp);
+        System.out.println(wakenUp.compareAndSet(true, true));
+        System.out.println(wakenUp);
 
         final ThreadSyncable t1 = new ThreadSyncable(new Runnable() {
             @Override

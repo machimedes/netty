@@ -1,4 +1,4 @@
-package io.netty.example.quickstart.innerclass;
+package io.netty.example._quickstart.innerclass;
 
 public class OuterClass {
     int outer = 1;

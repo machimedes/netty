@@ -1,4 +1,4 @@
-package io.netty.example.quickstart.sendandresponse;
+package io.netty.example._quickstart.sendandresponse;
 
 
 import io.netty.channel.ChannelHandler;

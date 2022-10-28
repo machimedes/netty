@@ -1,4 +1,4 @@
-package io.netty.example.quickstart.sendandresponse;
+package io.netty.example._quickstart.sendandresponse;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -8,14 +8,14 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.FixedLengthFrameDecoder;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.util.CharsetUtil;
 
 
-public class Server {
+public class PrintServer {
     private int port;
-    public Server(int port) {
+    public PrintServer(int port) {
         this.port = port;
     }
 
@@ -31,9 +31,9 @@ public class Server {
                         public void initChannel(SocketChannel ch) throws Exception {
                             ch.pipeline().addLast(
                                     ConnectionCounter.getInstance()
-                                    , new FixedLengthFrameDecoder(4)
+                                    , new LengthFieldBasedFrameDecoder(Short.MAX_VALUE,0,4)
                                     , new StringDecoder(CharsetUtil.UTF_8)
-                                    , new ServerHandler());
+                                    , new PrintServerHandler());
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)
@@ -41,6 +41,8 @@ public class Server {
 
             ChannelFuture f = b.bind(port).sync();
             f.channel().closeFuture().sync();
+            f.channel().close();
+
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
@@ -48,6 +50,6 @@ public class Server {
     }
 
     public static void main(String[] args) throws Exception {
-        new Server(8089).run();
+        new PrintServer(8089).run();
     }
 }

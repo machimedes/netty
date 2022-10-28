@@ -1,4 +1,4 @@
-package io.netty.example.quickstart.threadtest.threadwriterlocal;
+package io.netty.example._quickstart.threadtest.threadwriterlocal;
 
 import io.netty.util.concurrent.FastThreadLocal;
 

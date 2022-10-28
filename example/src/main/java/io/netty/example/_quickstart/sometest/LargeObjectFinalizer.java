@@ -1,4 +1,4 @@
-package io.netty.example.quickstart.sometest;
+package io.netty.example._quickstart.sometest;
 
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;

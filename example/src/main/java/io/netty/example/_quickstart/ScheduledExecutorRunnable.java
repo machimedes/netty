@@ -1,8 +1,7 @@
-package io.netty.example.quickstart;
+package io.netty.example._quickstart;
 
 
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
