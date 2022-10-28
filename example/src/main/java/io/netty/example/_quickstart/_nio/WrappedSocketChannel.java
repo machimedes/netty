@@ -1,4 +1,4 @@
-package io.netty.example._quickstart.nio;
+package io.netty.example._quickstart._nio;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;

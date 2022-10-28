@@ -55,6 +55,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
         super.doBeginRead();
     }
 
+    // ServerSocketChannel底层数据读写的实现类 Message代表每次accept返回的SocketChannel
     private final class NioMessageUnsafe extends AbstractNioUnsafe {
 
         private final List<Object> readBuf = new ArrayList<Object>();
@@ -65,6 +66,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             final ChannelConfig config = config();
             final ChannelPipeline pipeline = pipeline();
             final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
+            // AdaptiveRecvByteBufAllocator
             allocHandle.reset(config);
 
             boolean closed = false;
@@ -72,6 +74,8 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             try {
                 try {
                     do {
+                        // accept操作，成功则将接收到的SocketChannel放到readBuf中
+                        // 每一个ServerSocketChannel -> NioMessageUnsafe -> readBuf
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
                             break;
@@ -80,7 +84,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                             closed = true;
                             break;
                         }
-
+                        // 不会走到这一次 每次获取一个SocketServer或者连接失败
                         allocHandle.incMessagesRead(localRead);
                     } while (allocHandle.continueReading());
                 } catch (Throwable t) {
@@ -90,6 +94,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 int size = readBuf.size();
                 for (int i = 0; i < size; i ++) {
                     readPending = false;
+                    // 还是pipeline事件处理 通过ServerBootstrapAcceptor提交到其他executor上注册并处理
                     pipeline.fireChannelRead(readBuf.get(i));
                 }
                 readBuf.clear();

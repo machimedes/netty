@@ -439,7 +439,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         // the first case (BAD - wake-up required) and the second case
                         // (OK - no wake-up required).
 
-                        //    每次循环会经过一下几个步骤                                           | task1                 | 其他任务
+                        //    每次循环会经过一下几个步骤                                           | task1                 | 其他任务试图唤醒
                         // loop#1 | 1 wakenUp设为false                                         |                       |
                         //        | 2 有继续调度的作业 selectNow                                 |                       |
                         //        |                                                           | 此时提交，wakeUp设为真   |
@@ -644,6 +644,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
         try {
             int readyOps = k.readyOps();
+            // ServerSocketChannel OP_ACCEPT
+            // SocketChannel OP_READ
+
             // We first need to call finishConnect() before try to trigger a read(...) or write(...) as otherwise
             // the NIO JDK channel implementation may throw a NotYetConnectedException.
             if ((readyOps & SelectionKey.OP_CONNECT) != 0) {
@@ -654,6 +657,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 k.interestOps(ops);
 
                 unsafe.finishConnect();
+                // connect() 直接返回连接成功与否，不阻塞
+                // finishConnect 阻塞直到连接建立
+                // 连接真正建立才会触发channel active
             }
 
             // Process OP_WRITE first as we may be able to write some queued buffers and so free memory.

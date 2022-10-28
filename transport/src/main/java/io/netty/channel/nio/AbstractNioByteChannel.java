@@ -17,14 +17,7 @@ package io.netty.channel.nio;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelConfig;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelMetadata;
-import io.netty.channel.ChannelOutboundBuffer;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.FileRegion;
-import io.netty.channel.RecvByteBufAllocator;
+import io.netty.channel.*;
 import io.netty.channel.internal.ChannelUtils;
 import io.netty.channel.socket.ChannelInputShutdownEvent;
 import io.netty.channel.socket.ChannelInputShutdownReadComplete;
@@ -131,6 +124,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
         @Override
         public final void read() {
             final ChannelConfig config = config();
+            // 取消关注的事件 不读取
             if (shouldBreakReadReady(config)) {
                 clearReadPending();
                 return;
@@ -138,14 +132,20 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
             final ChannelPipeline pipeline = pipeline();
             final ByteBufAllocator allocator = config.getAllocator();
             final RecvByteBufAllocator.Handle allocHandle = recvBufAllocHandle();
+            // AdaptiveRecvByteBufAllocator#HandleImpl
             allocHandle.reset(config);
 
             ByteBuf byteBuf = null;
             boolean close = false;
             try {
                 do {
+                    // individualReadMax, bytesToRead
+                    // lastBytesRead() 调整下一次数据读取的 nextReceiveBufferSize
                     byteBuf = allocHandle.allocate(allocator);
+
+                    // 从channel中读取数据 考虑到ByteBuffer的容量 可能需要读多次
                     allocHandle.lastBytesRead(doReadBytes(byteBuf));
+                    // -1表示收到连接关闭的信号
                     if (allocHandle.lastBytesRead() <= 0) {
                         // nothing was read. release the buffer.
                         byteBuf.release();
@@ -160,7 +160,19 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
 
                     allocHandle.incMessagesRead(1);
                     readPending = false;
+                    // 更具byteBuffer容量可能多次读取 每次都发送处理
                     pipeline.fireChannelRead(byteBuf);
+                    // ChannelInboundHandlerAdapter ChannelOutboundHandlerAdapter
+                    // pipeline
+                    //     context1 —> context2 -> context3
+                    //         |           |          |
+                    //     handler1    handler2    handler3
+                    // pipeline.fireChannelRead(byteBuf) pipeline=start
+                    // AbstractChannelHandlerContext.invokeChannelRead(head, msg); next=head
+                    // next.invokeChannelRead(m)
+                    // invokeChannelRead(Object msg)
+                    // ((ChannelInboundHandler) handler()).channelRead(this, msg)
+                    // ctx.fireChannelRead(msg)
                     byteBuf = null;
                 } while (allocHandle.continueReading());
 

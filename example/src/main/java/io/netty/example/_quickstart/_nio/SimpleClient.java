@@ -1,4 +1,4 @@
-package io.netty.example._quickstart.nio;
+package io.netty.example._quickstart._nio;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

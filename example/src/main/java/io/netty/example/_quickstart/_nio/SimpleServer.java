@@ -1,6 +1,4 @@
-package io.netty.example._quickstart.nio;
-
-import io.netty.buffer.ByteBuf;
+package io.netty.example._quickstart._nio;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -12,8 +10,8 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 
-import static io.netty.example._quickstart.nio.DecodeState.R_CONTENT;
-import static io.netty.example._quickstart.nio.DecodeState.R_LENGTH;
+import static io.netty.example._quickstart._nio.DecodeState.R_CONTENT;
+import static io.netty.example._quickstart._nio.DecodeState.R_LENGTH;
 
 public class SimpleServer {
 
