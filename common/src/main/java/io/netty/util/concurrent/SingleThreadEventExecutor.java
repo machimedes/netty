@@ -772,7 +772,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
         if (!addTaskWakesUp && wakesUpForTask(task)) {
             // 如果时外部线程提交的任务，触发一次wakeUp；wakeUp可以提前触发并抵消下一次的select阻塞；以免当前selector正好处于阻塞select的状态
-            // 如果wakenUp.compareAndSet(false, true)本身为true，可能导致唤醒失败
+            // 如果wakenUp.compareAndSet(false, true)本身为true，可能导致不唤醒
             wakeup(inEventLoop);
         }
     }

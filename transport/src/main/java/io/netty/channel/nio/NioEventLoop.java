@@ -439,7 +439,22 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         // the first case (BAD - wake-up required) and the second case
                         // (OK - no wake-up required).
 
-                        // 太复杂。。。
+                        //    每次循环会经过一下几个步骤                                           | task1                 | 其他任务
+                        // loop#1 | 1 wakenUp设为false                                         |                       |
+                        //        | 2 有继续调度的作业 selectNow                                 |                       |
+                        //        |                                                           | 此时提交，wakeUp设为真   |
+                        //        | 3 有作业并且 wakenUp.compareAndSet(false, true) selectNow   | 不执行                 |
+                        //        | 4 select(timeout) 会阻塞                                   | 执行但不阻塞             |
+                        //        |                                                           | 结果OK，task1可以及时    |
+                        //        |                                                           |                       | *此时如果试图唤醒无效
+                        //        | 5 if (wakenUp.get()) { selector.wakeup(); }               |                       | *为了避免这种情况，当wakenUp为true一定执行唤醒
+                        // loop#2 | 1 wakenUp设为false                                         |                       |
+                        //        | 2 有继续调度的作业 selectNow                                 |                       |
+                        //        |                                                           | 此时提交，wakeUp设为真   |
+                        //        | 3 有作业并且 wakenUp.compareAndSet(false, true) selectNow   | 不执行                 |
+                        //        | 4 select(timeout) 会阻塞                                   | 执行但不阻塞             |
+                        //        | 5 if (wakenUp.get()) { selector.wakeup(); }               |                       |
+
                         if (wakenUp.get()) {
                             selector.wakeup();
                         }
@@ -756,11 +771,14 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 // Selector#wakeup. So we need to check task queue again before executing select operation.
                 // If we don't, the task might be pended until select operation was timed out.
                 // It might be pended until idle timeout if IdleStateHandler existed in pipeline.
-                // 情形2 如果运行到这段代码有作业提交到队列，非阻塞select
-                // 如果wakenUp本身为true说明task已经调用了wakeup，则不需要处理
+                // 情形2 如果运行到这段代码有作业task1提交到队列，非阻塞select
+                // 如果wakenUp本身为true说明task1已经调用了wakeup，则不需要处理
+                // 如果wakenUp本身为false说明task1还没有来得及调用wakeup，需要处理
                 if (hasTasks() && wakenUp.compareAndSet(false, true)) {
+                    // 假设恰好此时提交task1的线程执行了wakeUp()
                     selector.selectNow();
                     selectCnt = 1;
+                    // 假设在此时提交一个task2 由于wakenUp为真 task2不会执行wakeup，但是task2会交由下一次循环处理，不用担心阻塞问题
                     break;
                 }
 
