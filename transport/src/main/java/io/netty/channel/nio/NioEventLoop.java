@@ -445,7 +445,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         //        |                                                           | 此时提交，wakeUp设为真   |
                         //        | 3 有作业并且 wakenUp.compareAndSet(false, true) selectNow   | 不执行                 |
                         //        | 4 select(timeout) 会阻塞                                   | 执行但不阻塞             |
-                        //        |                                                           | 结果OK，task1可以及时    |
+                        //        |                                                           | 结果OK，task1可以及时执行 |
                         //        |                                                           |                       | *此时如果试图唤醒无效
                         //        | 5 if (wakenUp.get()) { selector.wakeup(); }               |                       | *为了避免这种情况，当wakenUp为true一定执行唤醒
                         // loop#2 | 1 wakenUp设为false                                         |                       |
